@@ -14,8 +14,9 @@
     "test": "vitest run src --passWithNoTests",
     "test:db": "supabase test db",
     "test:concurrency": "vitest run tests/db",
-    "test:all": "npm run test && npm run test:db && npm run test:concurrency && npm run test:e2e",
-    "test:e2e": "playwright test --trace off"
+    "test:all": "npm run test && npm run test:db && npm run test:concurrency && npm run test:e2e && npm run check:bundle",
+    "test:e2e": "playwright test --trace off",
+    "check:bundle": "npm run build && node scripts/check-bundle.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

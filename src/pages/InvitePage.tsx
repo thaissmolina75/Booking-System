@@ -148,7 +148,7 @@ export function InvitePage() {
         <p className="text-muted-foreground">
           Sign out, then sign in with {invite.email} to join {invite.business_name}.
         </p>
-        <Button size="touch" onClick={() => void signOut()}>
+        <Button size="touch" onClick={() => void signOut({ stay: true })}>
           Sign out and switch account
         </Button>
       </AuthShell>

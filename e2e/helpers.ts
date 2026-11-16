@@ -43,7 +43,7 @@ export async function logIn(page: Page, email: string, password = PASSWORD) {
 
 export async function signOut(page: Page) {
   await page.getByRole('button', { name: 'Sign out' }).first().click()
-  await expect(page).toHaveURL(/\/login/)
+  await expect(page).toHaveURL(/\/login$/)
 }
 
 /** The newest link in the newest email sent to this address (local Mailpit inbox). */

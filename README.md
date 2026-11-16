@@ -5,7 +5,7 @@ users sign in: the platform admin, business owners and their staff. Tourists
 never sign in; a WhatsApp/Instagram chatbot (built later) will call the same
 database functions.
 
-**Status:** Phases 1 to 4 of 5 are done (database and security; authentication; owner and staff dashboard; platform admin panel).
+**Status:** all five phases are done. Verified on local Supabase only; not yet deployed to a hosted project.
 
 ## Stack
 
@@ -42,6 +42,7 @@ npm run test:db            # pgTAP: seats, isolation, permissions, invites, date
 npm run test:concurrency   # parallel create_booking calls against the local stack
 npm test                   # unit tests (routing and access rules)
 npm run test:e2e           # Playwright at 390px: routing, invite flow, password reset
+npm run check:bundle        # builds, then fails if any secret key is in the client bundle
 npm run test:all
 ```
 
@@ -181,6 +182,19 @@ readable sentence as the detail.
 - While a business is suspended, or its trial has ended, bot bookings are rejected (`automation_paused`). Manual bookings keep working.
 - Invite tokens are visible to owners and platform admins only, not staff.
 - Owners change availability only through the functions (so past days stay read-only); they have no direct write access to that table.
+
+## Going live (not done yet)
+
+1. Create a Supabase project and run `npx supabase link`, then
+   `npx supabase db push` to apply `supabase/migrations`. Do not run
+   `supabase/seed.sql` there: it creates users with a known password.
+2. Set the Site URL and redirect URLs, and turn on Google sign-in (see above).
+3. Set up an email sender (custom SMTP) in Supabase: the built-in one is
+   rate-limited and meant for testing.
+4. Host the built app (`npm run build`, the `dist` folder) with
+   `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` set, and a rewrite of every
+   path to `index.html`.
+5. Sign up, then make yourself platform admin with the SQL above.
 
 ## Secrets
 

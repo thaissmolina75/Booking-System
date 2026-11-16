@@ -6,7 +6,12 @@ import { supabase } from '@/lib/supabase'
 type AuthState = {
   /** undefined while the stored session is being read. */
   session: Session | null | undefined
-  signOut: () => Promise<void>
+  /**
+   * Signs out and goes to a clean log-in page, so the next person on this
+   * device does not land on the page the last one was on. Pass stay: true to
+   * remain on the current page (used when switching account on an invite).
+   */
+  signOut: (options?: { stay?: boolean }) => Promise<void>
 }
 
 const AuthContext = createContext<AuthState | null>(null)
@@ -34,8 +39,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AuthState>(
     () => ({
       session,
-      signOut: async () => {
+      signOut: async (options) => {
         await supabase.auth.signOut()
+        if (!options?.stay) window.location.replace('/login')
       },
     }),
     [session],
