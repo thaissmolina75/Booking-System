@@ -1,7 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from './database.types'
 
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
+const configuredUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
+// "same-origin" is for local development behind a tunnel or cloud preview: the
+// dev server forwards Supabase calls (see vite.config.ts).
+const url = configuredUrl === 'same-origin' ? window.location.origin : configuredUrl
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
 if (!url || !anonKey) {
