@@ -14,6 +14,8 @@ type BusinessState = {
   isOwner: boolean
   /** May approve, decline and add bookings. */
   canAct: boolean
+  /** Where this dashboard lives: /dashboard, or /admin/view/<id> in "view as" mode. */
+  basePath: string
 }
 
 const BusinessContext = createContext<BusinessState | null>(null)
@@ -38,7 +40,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   const value = useMemo<BusinessState | null>(
     () =>
       current
-        ? { current, all: memberships, select, readOnly: false, isOwner: current.role === 'owner', canAct: true }
+        ? { current, all: memberships, select, readOnly: false, isOwner: current.role === 'owner', canAct: true, basePath: '/dashboard' }
         : null,
     [current, memberships, select],
   )
@@ -56,7 +58,15 @@ export function ViewAsBusinessProvider({
   children: ReactNode
 }) {
   const value = useMemo<BusinessState>(
-    () => ({ current: business, all: [business], select: () => undefined, readOnly: true, isOwner: false, canAct: false }),
+    () => ({
+      current: business,
+      all: [business],
+      select: () => undefined,
+      readOnly: true,
+      isOwner: false,
+      canAct: false,
+      basePath: `/admin/view/${business.businessId}`,
+    }),
     [business],
   )
   return <BusinessContext.Provider value={value}>{children}</BusinessContext.Provider>

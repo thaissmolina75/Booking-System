@@ -1,5 +1,5 @@
-import { CalendarDays, LogOut, Map, Settings, Ticket, Users } from 'lucide-react'
-import { NavLink, Navigate, Outlet } from 'react-router-dom'
+import { ArrowLeft, CalendarDays, Eye, LogOut, Map, Settings, Ticket, Users } from 'lucide-react'
+import { Link, NavLink, Navigate, Outlet } from 'react-router-dom'
 import { canOpenSection, type DashboardSection } from '@/auth/access'
 import { useAuth } from '@/auth/AuthProvider'
 import { isAutomationPaused } from '@/lib/format'
@@ -39,9 +39,10 @@ function BusinessSwitcher() {
 }
 
 export function DashboardLayout() {
-  const { current } = useBusiness()
+  const { current, readOnly, basePath } = useBusiness()
   const { session, signOut } = useAuth()
-  const sections = SECTIONS.filter((s) => canOpenSection(current.role, s.id))
+  // "View as" shows every page, read-only.
+  const sections = SECTIONS.filter((s) => readOnly || canOpenSection(current.role, s.id))
   const paused = isAutomationPaused(current.status, current.trialEndsAt)
   // Chatbot bookings and seat changes appear without a reload.
   useBusinessRealtime(current.businessId)
@@ -55,7 +56,7 @@ export function DashboardLayout() {
           {sections.map(({ id, label, icon: Icon }) => (
             <NavLink
               key={id}
-              to={`/dashboard/${id}`}
+              to={`${basePath}/${id}`}
               className={({ isActive }) =>
                 cn(
                   'flex h-11 items-center gap-3 rounded-lg px-3 font-medium',
@@ -70,14 +71,21 @@ export function DashboardLayout() {
         </nav>
         <div className="mt-auto flex flex-col gap-2 text-sm text-muted-foreground">
           <p className="truncate">{session?.user.email}</p>
-          <button
-            type="button"
-            onClick={() => void signOut()}
-            className="flex h-11 items-center gap-3 rounded-lg px-3 font-medium hover:bg-muted"
-          >
-            <LogOut className="size-5" aria-hidden />
-            Sign out
-          </button>
+          {readOnly ? (
+            <Link to="/admin" className="flex h-11 items-center gap-3 rounded-lg px-3 font-medium hover:bg-muted">
+              <ArrowLeft className="size-5" aria-hidden />
+              Back to admin
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => void signOut()}
+              className="flex h-11 items-center gap-3 rounded-lg px-3 font-medium hover:bg-muted"
+            >
+              <LogOut className="size-5" aria-hidden />
+              Sign out
+            </button>
+          )}
         </div>
       </aside>
 
@@ -87,15 +95,39 @@ export function DashboardLayout() {
           <div className="min-w-0 flex-1">
             <BusinessSwitcher />
           </div>
-          <button
-            type="button"
-            onClick={() => void signOut()}
-            aria-label="Sign out"
-            className="flex size-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"
-          >
-            <LogOut className="size-5" aria-hidden />
-          </button>
+          {readOnly ? (
+            <Link
+              to="/admin"
+              aria-label="Back to admin"
+              className="flex size-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"
+            >
+              <ArrowLeft className="size-5" aria-hidden />
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => void signOut()}
+              aria-label="Sign out"
+              className="flex size-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"
+            >
+              <LogOut className="size-5" aria-hidden />
+            </button>
+          )}
         </header>
+
+        {readOnly ? (
+          <div
+            role="status"
+            className="flex flex-wrap items-center gap-x-3 gap-y-1 bg-foreground px-4 py-2.5 text-background md:px-8"
+            data-testid="view-as-banner"
+          >
+            <Eye className="size-5 shrink-0" aria-hidden />
+            <span className="font-medium">Viewing {current.businessName} as platform admin. Read-only.</span>
+            <Link to="/admin" className="font-semibold underline underline-offset-4">
+              Back to admin
+            </Link>
+          </div>
+        ) : null}
 
         {paused ? (
           <div role="status" className="border-b border-warn/30 bg-warn-soft px-4 py-3 font-medium text-warn md:px-8" data-testid="paused-banner">
@@ -118,7 +150,7 @@ export function DashboardLayout() {
           {sections.map(({ id, label, icon: Icon }) => (
             <NavLink
               key={id}
-              to={`/dashboard/${id}`}
+              to={`${basePath}/${id}`}
               className={({ isActive }) =>
                 cn(
                   'flex min-h-16 flex-1 flex-col items-center justify-center gap-1 text-xs font-medium',
@@ -144,7 +176,7 @@ export function DashboardLayout() {
 
 /** Owner-only pages. Staff are sent back; the database rejects them as well. */
 export function OwnerOnly({ children }: { children: React.ReactNode }) {
-  const { current } = useBusiness()
-  if (current.role !== 'owner') return <Navigate to="/dashboard/bookings" replace />
+  const { isOwner, readOnly, basePath } = useBusiness()
+  if (!isOwner && !readOnly) return <Navigate to={`${basePath}/bookings`} replace />
   return <>{children}</>
 }

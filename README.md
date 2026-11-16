@@ -5,7 +5,7 @@ users sign in: the platform admin, business owners and their staff. Tourists
 never sign in; a WhatsApp/Instagram chatbot (built later) will call the same
 database functions.
 
-**Status:** Phases 1 to 3 of 5 are done (database and security; authentication; owner and staff dashboard).
+**Status:** Phases 1 to 4 of 5 are done (database and security; authentication; owner and staff dashboard; platform admin panel).
 
 ## Stack
 
@@ -63,6 +63,16 @@ Signing in never grants access by itself. After sign-in:
 People join a business through an invite link, `/invite/<token>`. The invite
 survives sign-up, email confirmation and the Google redirect, and only works
 for the invited email address.
+
+### Platform admin panel (`/admin`)
+
+- Businesses table for a chosen month: status, trial end, approved bookings by
+  source and commission owed, with a CSV export.
+- Create a business, then create an owner invite link to send.
+- Edit status, trial end and commission. The database writes every such change
+  to `audit_log`, whichever way it was made.
+- "View as" opens any business's dashboard read-only at
+  `/admin/view/<business id>`, with a banner.
 
 ### Make yourself platform admin
 

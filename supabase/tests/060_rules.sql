@@ -1,7 +1,7 @@
 -- Booking codes, decision rules, the chatbot (service role) path, audit log
 -- and the commission report.
 begin;
-select plan(31);
+select plan(39);
 select tests.fixture();
 
 -- codes: per business, sequential, PREFIX-0000
@@ -104,6 +104,27 @@ select is(
 select ok((select count(*) >= 3 from public.get_commission_report(tests.future_month())), 'admin sees every business');
 select is((select count(*)::int from public.bookings where business_id in (tests.biz('t-biz-a'), tests.biz('t-biz-b'))), 8,
   'admin reads bookings of every business');
+
+-- platform admin panel: create a business, invite its owner, edit billing
+select lives_ok($$ insert into public.businesses (name, slug, status, trial_ends_at) values ('Admin Made Tours', 'admin-made', 'trial', now() + interval '14 days') $$,
+  'admin: can create a business');
+select is((select booking_prefix from public.businesses where slug = 'admin-made'), 'AMT', 'admin: new business gets its booking prefix');
+select is((select count(*)::int from public.audit_log where business_id = tests.biz('admin-made') and action = 'business.created'
+            and user_id = tests.uid('t_admin@test.local')), 1, 'admin: business creation is in the audit log');
+select lives_ok($$ insert into public.invites (business_id, email, role) values (tests.biz('admin-made'), 'new.owner@test.local', 'owner') $$,
+  'admin: can invite an owner to any business');
+select is((select created_by from public.invites where email = 'new.owner@test.local'), tests.uid('t_admin@test.local'),
+  'admin: invite records who created it');
+update public.businesses set status = 'active' where slug = 'admin-made';
+update public.businesses set trial_ends_at = null where slug = 'admin-made';
+update public.businesses set commission_type = 'fixed_per_booking', commission_value = 20 where slug = 'admin-made';
+update public.businesses set name = 'Admin Made Tours LLC' where slug = 'admin-made';
+select is((select count(*)::int from public.audit_log where business_id = tests.biz('admin-made') and action = 'business.billing_updated'
+            and user_id = tests.uid('t_admin@test.local')), 3,
+  'admin: each status, trial and commission change is audited (a rename is not a billing change)');
+select is((select details::text from public.audit_log where business_id = tests.biz('admin-made') and details ? 'status'),
+  '{"status": ["trial", "active"]}', 'admin: the audit entry holds the old and the new value');
+select is((select count(*)::int from public.get_team_members(tests.biz('t-biz-a'))), 2, 'admin: can read any business''s team (view as)');
 
 select tests.login('t_owner_a@test.local');
 select throws_ok($$ select * from public.get_commission_report(tests.future_month()) $$,

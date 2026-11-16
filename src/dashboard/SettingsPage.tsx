@@ -39,6 +39,7 @@ export function SettingsPage() {
 }
 
 function SettingsForm({ business }: { business: Business }) {
+  const { readOnly } = useBusiness()
   const update = useUpdateBusiness(business.id)
   const [name, setName] = useState(business.name)
   const [timezone, setTimezone] = useState(business.timezone)
@@ -60,7 +61,8 @@ function SettingsForm({ business }: { business: Business }) {
   }
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-4 rounded-2xl border bg-card p-4" noValidate>
+    <form onSubmit={submit} className="rounded-2xl border bg-card p-4" noValidate>
+      <fieldset disabled={readOnly} className="flex min-w-0 flex-col gap-4">
       <Field label="Business name" required value={name} onChange={(e) => setName(e.target.value)} />
       <SelectField label="Timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)}>
         {zones.map((z) => (
@@ -73,9 +75,12 @@ function SettingsForm({ business }: { business: Business }) {
       <Field label="WhatsApp number" type="tel" inputMode="tel" placeholder="+971 50 123 4567" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} />
       <Field label="Instagram handle" placeholder="yourbusiness" value={instagram} onChange={(e) => setInstagram(e.target.value)} />
       {update.isError ? <Notice tone="error">{errorText(update.error)}</Notice> : null}
-      <Button type="submit" size="touch" disabled={update.isPending || !name.trim()}>
-        {update.isPending ? 'Saving…' : 'Save settings'}
-      </Button>
+      {readOnly ? null : (
+        <Button type="submit" size="touch" disabled={update.isPending || !name.trim()}>
+          {update.isPending ? 'Saving…' : 'Save settings'}
+        </Button>
+      )}
+      </fieldset>
     </form>
   )
 }

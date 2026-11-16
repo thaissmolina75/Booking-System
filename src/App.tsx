@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AdminPage } from '@/admin/AdminPage'
+import { ViewAsPage } from '@/admin/ViewAsPage'
 import { PostAuthRedirect, RequireAuth, RequireMember, RequirePlatformAdmin } from '@/auth/guards'
 import { BusinessProvider } from '@/dashboard/BusinessProvider'
 import { BookingsPage } from '@/dashboard/BookingsPage'
@@ -15,6 +16,19 @@ import { LoginPage } from '@/pages/LoginPage'
 import { NoAccessPage } from '@/pages/NoAccessPage'
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
 import { SignupPage } from '@/pages/SignupPage'
+
+/** Pages shared by the member dashboard and the admin's read-only "view as". */
+const dashboardPages = (
+  <>
+    <Route index element={<Navigate to="bookings" replace />} />
+    <Route path="bookings" element={<BookingsPage />} />
+    <Route path="calendar" element={<CalendarPage />} />
+    <Route path="tours" element={<OwnerOnly><ToursPage /></OwnerOnly>} />
+    <Route path="team" element={<OwnerOnly><TeamPage /></OwnerOnly>} />
+    <Route path="settings" element={<OwnerOnly><SettingsPage /></OwnerOnly>} />
+    <Route path="*" element={<Navigate to="bookings" replace />} />
+  </>
+)
 
 function App() {
   return (
@@ -43,7 +57,7 @@ function App() {
         }
       />
       <Route
-        path="/admin/*"
+        path="/admin"
         element={
           <RequireAuth>
             <RequirePlatformAdmin>
@@ -52,6 +66,19 @@ function App() {
           </RequireAuth>
         }
       />
+      {/* The owner's dashboard for any business, read-only. */}
+      <Route
+        path="/admin/view/:businessId"
+        element={
+          <RequireAuth>
+            <RequirePlatformAdmin>
+              <ViewAsPage />
+            </RequirePlatformAdmin>
+          </RequireAuth>
+        }
+      >
+        {dashboardPages}
+      </Route>
       <Route
         path="/dashboard"
         element={
@@ -64,13 +91,7 @@ function App() {
           </RequireAuth>
         }
       >
-        <Route index element={<Navigate to="bookings" replace />} />
-        <Route path="bookings" element={<BookingsPage />} />
-        <Route path="calendar" element={<CalendarPage />} />
-        <Route path="tours" element={<OwnerOnly><ToursPage /></OwnerOnly>} />
-        <Route path="team" element={<OwnerOnly><TeamPage /></OwnerOnly>} />
-        <Route path="settings" element={<OwnerOnly><SettingsPage /></OwnerOnly>} />
-        <Route path="*" element={<Navigate to="bookings" replace />} />
+        {dashboardPages}
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -22,10 +22,11 @@ async function copy(text: string, what: string) {
 const ROLE_LABEL = { owner: 'Owner', staff: 'Staff' } as const
 
 export function TeamPage() {
+  const { readOnly } = useBusiness()
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader title="Team" />
-      <InviteForm />
+      {readOnly ? null : <InviteForm />}
       <PendingInvites />
       <Members />
     </div>
@@ -112,7 +113,7 @@ function InviteForm() {
 }
 
 function PendingInvites() {
-  const { current } = useBusiness()
+  const { current, readOnly } = useBusiness()
   const invites = useInvites(current.businessId)
   const revoke = useRevokeInvite(current.businessId)
   if (!invites.data || invites.data.length === 0) return null
@@ -136,6 +137,7 @@ function PendingInvites() {
                 </p>
                 <Button
                   variant="ghost"
+                  hidden={readOnly}
                   className="h-11 px-3 text-[0.95rem] text-bad hover:bg-bad-soft hover:text-bad"
                   disabled={revoke.isPending}
                   onClick={() =>
@@ -148,7 +150,7 @@ function PendingInvites() {
                   Revoke
                 </Button>
               </div>
-              {expired ? null : <InviteLinkBox invite={invite} />}
+              {expired || readOnly ? null : <InviteLinkBox invite={invite} />}
             </li>
           )
         })}
@@ -158,7 +160,7 @@ function PendingInvites() {
 }
 
 function Members() {
-  const { current } = useBusiness()
+  const { current, readOnly } = useBusiness()
   const { session } = useAuth()
   const team = useTeam(current.businessId)
   const remove = useRemoveMember(current.businessId)
@@ -197,7 +199,7 @@ function Members() {
                       {member.email}, {ROLE_LABEL[member.role]}
                     </p>
                   </div>
-                  {isLastOwner ? (
+                  {readOnly ? null : isLastOwner ? (
                     <span className="text-sm text-muted-foreground">Only owner, cannot be removed</span>
                   ) : confirming === member.membership_id ? (
                     <span className="flex gap-2">

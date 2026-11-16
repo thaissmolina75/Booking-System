@@ -13,7 +13,7 @@ import { useReorderTours, useSaveTour, useTours, type Tour } from './api'
 import { useBusiness } from './BusinessProvider'
 
 export function ToursPage() {
-  const { current } = useBusiness()
+  const { current, readOnly } = useBusiness()
   const tours = useTours(current.businessId)
   const reorder = useReorderTours(current.businessId)
   const save = useSaveTour(current.businessId)
@@ -29,10 +29,12 @@ export function ToursPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader title="Tours">
-        <Button size="touch" onClick={() => setEditing('new')}>
-          <Plus aria-hidden />
-          Add tour
-        </Button>
+        {readOnly ? null : (
+          <Button size="touch" onClick={() => setEditing('new')}>
+            <Plus aria-hidden />
+            Add tour
+          </Button>
+        )}
       </PageHeader>
 
       {tours.isPending ? (
@@ -46,7 +48,7 @@ export function ToursPage() {
           {errorText(tours.error)}
         </Notice>
       ) : tours.data.length === 0 ? (
-        <EmptyState icon={<MapIcon />} title="No tours yet" action={<Button size="touch" onClick={() => setEditing('new')}>Add your first tour</Button>}>
+        <EmptyState icon={<MapIcon />} title="No tours yet" action={readOnly ? undefined : <Button size="touch" onClick={() => setEditing('new')}>Add your first tour</Button>}>
           A tour needs a name, prices and how many seats you run per day.
         </EmptyState>
       ) : (
@@ -54,7 +56,7 @@ export function ToursPage() {
           {tours.data.map((tour, index) => (
             <li key={tour.id} className={cn('rounded-2xl border bg-card p-4', !tour.is_active && 'bg-muted/50')} data-tour={tour.name}>
               <div className="flex items-start gap-3">
-                <div className="flex shrink-0 flex-col gap-1">
+                <div className={cn('flex shrink-0 flex-col gap-1', readOnly && 'hidden')}>
                   <button
                     type="button"
                     aria-label={`Move ${tour.name} up`}
@@ -111,7 +113,7 @@ export function ToursPage() {
                       ))}
                     </ul>
                   ) : null}
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className={cn('mt-3 flex flex-wrap gap-2', readOnly && 'hidden')}>
                     <Button variant="outline" className="h-11 bg-card px-4 text-[0.95rem]" onClick={() => setEditing(tour)}>
                       <Pencil aria-hidden />
                       Edit
