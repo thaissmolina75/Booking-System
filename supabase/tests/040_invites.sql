@@ -1,6 +1,6 @@
 -- Test 6: accept_invite fails on wrong email, expired token and reused token.
 begin;
-select plan(17);
+select plan(22);
 select tests.fixture();
 -- Stored with capitals on purpose: matching must be case-insensitive.
 select tests.create_user('T_Invited@Test.Local');
@@ -54,6 +54,15 @@ select throws_ok($$ select public.accept_invite(tests.invite_token('t_invited@te
 select tests.login('t_wrong@test.local');
 select throws_ok($$ select public.accept_invite(tests.invite_token('t_invited@test.local')) $$,
   'P0001', 'invite_already_used', 'reused token: rejected for another user');
+
+-- invite preview (what the invite page shows, also while signed out)
+select tests.login_anon();
+select is((select row(business_name, role, email, state)::text from public.get_invite_preview(tests.invite_token('t_unconfirmed@test.local'))),
+  '("Test Biz A",staff,t_unconfirmed@test.local,valid)', 'preview: signed-out visitor with the token sees business, role and email');
+select is((select state from public.get_invite_preview(tests.invite_token('t_late@test.local'))), 'expired', 'preview: expired');
+select is((select state from public.get_invite_preview(tests.invite_token('t_invited@test.local'))), 'used', 'preview: used');
+select is((select count(*)::int from public.get_invite_preview('')), 0, 'preview: empty token returns nothing');
+select is((select count(*)::int from public.get_invite_preview(repeat('0', 64))), 0, 'preview: unknown token returns nothing');
 
 select tests.logout();
 select is((select count(*)::int from public.memberships where business_id = tests.biz('t-biz-a')), 3,

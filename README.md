@@ -5,7 +5,7 @@ users sign in: the platform admin, business owners and their staff. Tourists
 never sign in; a WhatsApp/Instagram chatbot (built later) will call the same
 database functions.
 
-**Status:** Phase 1 of 5 is done (database, security and seat logic).
+**Status:** Phases 1 and 2 of 5 are done (database and security; authentication).
 
 ## Stack
 
@@ -40,11 +40,86 @@ Seed sign-ins (local only, password `password123`):
 ```bash
 npm run test:db            # pgTAP: seats, isolation, permissions, invites, dates, commission
 npm run test:concurrency   # parallel create_booking calls against the local stack
-npm test                   # unit tests
+npm test                   # unit tests (routing and access rules)
+npm run test:e2e           # Playwright at 390px: routing, invite flow, password reset
 npm run test:all
 ```
 
-The database tests only ever run against the local stack.
+The database and end-to-end tests only ever run against the local stack. The
+end-to-end tests read confirmation and reset emails from the local test inbox
+(http://127.0.0.1:54324). If Playwright has no browser yet, run
+`npx playwright install chromium`, or point `PW_CHROMIUM_PATH` at an installed
+Chromium.
+
+## Signing in
+
+Signing in never grants access by itself. After sign-in:
+
+1. a platform admin goes to `/admin`
+2. a user with at least one membership goes to `/dashboard` (with a business
+   switcher if they have several; the last one chosen is remembered)
+3. everyone else sees "No access yet"
+
+People join a business through an invite link, `/invite/<token>`. The invite
+survives sign-up, email confirmation and the Google redirect, and only works
+for the invited email address.
+
+### Make yourself platform admin
+
+Platform admins are added with SQL only. Sign up in the app first, then run
+this in the Supabase SQL editor (or `psql`):
+
+```sql
+insert into public.platform_admins (user_id)
+select id from auth.users where email = 'you@example.com';
+```
+
+### Google sign-in
+
+"Continue with Google" needs a Google OAuth client. Email and password work
+without it.
+
+**1. Google Cloud Console** (https://console.cloud.google.com)
+
+1. Create or pick a project.
+2. APIs & Services > OAuth consent screen: user type External, fill in the app
+   name and your support email, add the scopes `openid`, `email` and `profile`.
+   While the app is in Testing, add your own Google accounts as test users.
+3. APIs & Services > Credentials > Create credentials > OAuth client ID,
+   application type **Web application**.
+4. **Authorized JavaScript origins**: the addresses the app is served from.
+   - Local: `http://127.0.0.1:5173` and `http://localhost:5173`
+   - Production: `https://your-app-domain.com`
+5. **Authorized redirect URIs**: Google sends the user back to Supabase, not to
+   the app, so these are Supabase addresses.
+   - Local: `http://127.0.0.1:54321/auth/v1/callback`
+   - Production: `https://<your-project-ref>.supabase.co/auth/v1/callback`
+6. Create, then copy the **Client ID** and **Client secret**.
+
+**2. Supabase, production (hosted project)**
+
+1. Dashboard > Authentication > Sign In / Providers > Google: turn it on and
+   paste the Client ID and Client secret. Save.
+2. Dashboard > Authentication > URL Configuration:
+   - Site URL: `https://your-app-domain.com`
+   - Redirect URLs: add `https://your-app-domain.com/**`
+     (the app returns to `/auth/callback` and `/reset-password`).
+
+**3. Supabase, local**
+
+1. Create `supabase/.env` (gitignored) with:
+
+   ```bash
+   SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID=your-client-id
+   SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=your-client-secret
+   ```
+
+2. In `supabase/config.toml`, under `[auth.external.google]`, set
+   `enabled = true`.
+3. Restart: `npm run db:stop` then `npm run db:start`.
+
+Use the same host in the browser as in the Google settings: `127.0.0.1` and
+`localhost` count as different origins.
 
 ## How the database protects the data
 
