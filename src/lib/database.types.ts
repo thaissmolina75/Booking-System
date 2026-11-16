@@ -324,6 +324,11 @@ isOneToOne: false
               "approved_count": number,"capacity": number,"date": string,"is_blocked": boolean,"pending_count": number,"seats_left": number,"taken": number,"tour_id": string,"tour_name": string
             }[]
                            },
+"get_team_members":
+{ Args: { "p_business_id": string }; Returns: {
+              "email": string,"full_name": string,"joined_at": string,"membership_id": string,"role": Database["public"]['Enums']["membership_role"],"user_id": string
+            }[]
+                           },
 "has_role":
 { Args: { "p_business_id": string,"p_role": Database["public"]['Enums']["membership_role"] }; Returns: boolean
                            },

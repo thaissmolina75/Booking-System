@@ -1,7 +1,7 @@
 -- Test 5: staff cannot edit tours, availability or settings; owners cannot
 -- change status, trial or commission. Plus what each role CAN do.
 begin;
-select plan(44);
+select plan(48);
 select tests.fixture();
 update public.businesses set trial_ends_at = '2030-01-01T00:00:00Z' where slug = 't-biz-a';
 
@@ -40,6 +40,8 @@ select is((select count(*)::int from public.memberships where business_id = test
   'staff: cannot remove members');
 update public.memberships set role = 'owner' where user_id = tests.uid('t_staff_a@test.local');
 select is(public.has_role(tests.biz('t-biz-a'), 'owner'), false, 'staff: cannot promote itself to owner');
+
+select is((select count(*)::int from public.get_team_members(tests.biz('t-biz-a'))), 0, 'staff: cannot read team email addresses');
 
 -- what staff can do
 select lives_ok($$ select tests.book(tests.biz('t-biz-a'), tests.tour('T-A1'), tests.today() + 3, 2, 0, 'Staff manual') $$,
@@ -103,6 +105,12 @@ select throws_ok($$ delete from public.memberships where business_id = tests.biz
   'P0001', 'last_owner', 'owner: the last owner cannot be removed');
 select lives_ok($$ delete from public.memberships where business_id = tests.biz('t-biz-a') and role = 'staff' $$,
   'owner: can remove staff');
+
+select is((select string_agg(email || ':' || role, ',' order by email) from public.get_team_members(tests.biz('t-biz-a'))),
+  't_owner_a@test.local:owner', 'owner: reads its team with email addresses');
+select is((select count(*)::int from public.get_team_members(tests.biz('t-biz-b'))), 0, 'owner: cannot read another business''s team');
+select tests.login('t_outsider@test.local');
+select is((select count(*)::int from public.get_team_members(tests.biz('t-biz-a'))), 0, 'non-member: cannot read any team');
 
 -- ---------------------------------------------------------------------------
 -- platform admin

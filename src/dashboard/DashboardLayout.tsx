@@ -2,7 +2,9 @@ import { CalendarDays, LogOut, Map, Settings, Ticket, Users } from 'lucide-react
 import { NavLink, Navigate, Outlet } from 'react-router-dom'
 import { canOpenSection, type DashboardSection } from '@/auth/access'
 import { useAuth } from '@/auth/AuthProvider'
+import { isAutomationPaused } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { useBusinessRealtime } from './api'
 import { useBusiness } from './BusinessProvider'
 
 const SECTIONS: { id: DashboardSection; label: string; icon: typeof Ticket }[] = [
@@ -40,11 +42,14 @@ export function DashboardLayout() {
   const { current } = useBusiness()
   const { session, signOut } = useAuth()
   const sections = SECTIONS.filter((s) => canOpenSection(current.role, s.id))
+  const paused = isAutomationPaused(current.status, current.trialEndsAt)
+  // Chatbot bookings and seat changes appear without a reload.
+  useBusinessRealtime(current.businessId)
 
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[15rem_1fr]">
       {/* Desktop: sidebar */}
-      <aside className="hidden border-r bg-card md:flex md:min-h-dvh md:flex-col md:gap-6 md:p-4">
+      <aside className="hidden border-r bg-card md:sticky md:top-0 md:flex md:h-dvh md:flex-col md:gap-6 md:overflow-y-auto md:p-4">
         <BusinessSwitcher />
         <nav aria-label="Dashboard" className="flex flex-col gap-1">
           {sections.map(({ id, label, icon: Icon }) => (
@@ -92,8 +97,17 @@ export function DashboardLayout() {
           </button>
         </header>
 
+        {paused ? (
+          <div role="status" className="border-b border-warn/30 bg-warn-soft px-4 py-3 font-medium text-warn md:px-8" data-testid="paused-banner">
+            Automation paused. Contact your provider.
+          </div>
+        ) : null}
+
         <main className="flex-1 px-4 pt-5 pb-28 md:px-8 md:pt-8 md:pb-10">
-          <Outlet />
+          {/* Remount pages when the business changes, so no filter or open day carries over. */}
+          <div key={current.businessId}>
+            <Outlet />
+          </div>
         </main>
 
         {/* Mobile: bottom tab bar */}
@@ -133,13 +147,4 @@ export function OwnerOnly({ children }: { children: React.ReactNode }) {
   const { current } = useBusiness()
   if (current.role !== 'owner') return <Navigate to="/dashboard/bookings" replace />
   return <>{children}</>
-}
-
-export function ComingSoon({ title }: { title: string }) {
-  return (
-    <div className="mx-auto max-w-xl">
-      <h1 className="text-2xl font-semibold">{title}</h1>
-      <p className="mt-2 text-muted-foreground">This page is built in the next phase.</p>
-    </div>
-  )
 }

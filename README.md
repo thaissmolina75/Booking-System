@@ -5,7 +5,7 @@ users sign in: the platform admin, business owners and their staff. Tourists
 never sign in; a WhatsApp/Instagram chatbot (built later) will call the same
 database functions.
 
-**Status:** Phases 1 and 2 of 5 are done (database and security; authentication).
+**Status:** Phases 1 to 3 of 5 are done (database and security; authentication; owner and staff dashboard).
 
 ## Stack
 

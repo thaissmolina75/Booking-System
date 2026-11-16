@@ -129,3 +129,27 @@
 @utility tabular {
   font-variant-numeric: tabular-nums;
 }
+
+/* Sheets slide in from where they are anchored. */
+dialog.sheet[open] {
+  animation: sheet-up 180ms ease-out;
+}
+@media (min-width: 48rem) {
+  dialog.sheet[open] {
+    animation-name: sheet-side;
+  }
+}
+@keyframes sheet-up {
+  from { transform: translateY(1.5rem); opacity: 0; }
+}
+@keyframes sheet-side {
+  from { transform: translateX(1.5rem); opacity: 0; }
+}
+
+/* Ticket stub: the perforated edge between a booking's code and its details. */
+.ticket-perforation {
+  background-image: radial-gradient(circle at 1px 50%, var(--border) 1.5px, transparent 2px);
+  background-size: 2px 9px;
+  background-repeat: repeat-y;
+  width: 2px;
+}

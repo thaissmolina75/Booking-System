@@ -2,7 +2,12 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { AdminPage } from '@/admin/AdminPage'
 import { PostAuthRedirect, RequireAuth, RequireMember, RequirePlatformAdmin } from '@/auth/guards'
 import { BusinessProvider } from '@/dashboard/BusinessProvider'
-import { ComingSoon, DashboardLayout, OwnerOnly } from '@/dashboard/DashboardLayout'
+import { BookingsPage } from '@/dashboard/BookingsPage'
+import { CalendarPage } from '@/dashboard/CalendarPage'
+import { DashboardLayout, OwnerOnly } from '@/dashboard/DashboardLayout'
+import { SettingsPage } from '@/dashboard/SettingsPage'
+import { TeamPage } from '@/dashboard/TeamPage'
+import { ToursPage } from '@/dashboard/ToursPage'
 import { AuthCallbackPage } from '@/pages/AuthCallbackPage'
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
 import { InvitePage } from '@/pages/InvitePage'
@@ -60,11 +65,11 @@ function App() {
         }
       >
         <Route index element={<Navigate to="bookings" replace />} />
-        <Route path="bookings" element={<ComingSoon title="Bookings" />} />
-        <Route path="calendar" element={<ComingSoon title="Calendar" />} />
-        <Route path="tours" element={<OwnerOnly><ComingSoon title="Tours" /></OwnerOnly>} />
-        <Route path="team" element={<OwnerOnly><ComingSoon title="Team" /></OwnerOnly>} />
-        <Route path="settings" element={<OwnerOnly><ComingSoon title="Settings" /></OwnerOnly>} />
+        <Route path="bookings" element={<BookingsPage />} />
+        <Route path="calendar" element={<CalendarPage />} />
+        <Route path="tours" element={<OwnerOnly><ToursPage /></OwnerOnly>} />
+        <Route path="team" element={<OwnerOnly><TeamPage /></OwnerOnly>} />
+        <Route path="settings" element={<OwnerOnly><SettingsPage /></OwnerOnly>} />
         <Route path="*" element={<Navigate to="bookings" replace />} />
       </Route>
 
